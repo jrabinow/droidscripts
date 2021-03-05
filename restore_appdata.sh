@@ -48,7 +48,9 @@ function restore_all_appdata ()
     backupdir="${1}"; shift
 
     for app in ${backupdir}/*; do
-        restore_appdata "${app}"
+        if [ "${app##*/}" != "oandbackup.log" ]; then
+            restore_appdata "${app}"
+        fi
     done
 }
 
