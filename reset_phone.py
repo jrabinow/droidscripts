@@ -82,7 +82,8 @@ def flash_device(src_rom_dir, dry_run=False):
     def flash(step):
         filename = step.attrib["filename"]
         partition = step.attrib["partition"]
-        cmd = "fastboot flash {} {}".format(partition, filename)
+        filepath = os.path.join(src_rom_dir, filename)
+        cmd = "fastboot flash {} {}".format(partition, filepath)
 
         # system partition is large; reboot to make sure we're starting with a
         # clean slate
@@ -95,7 +96,7 @@ def flash_device(src_rom_dir, dry_run=False):
 
         LOG.info(cmd)
         if not dry_run:
-            fastboot("flash", partition, filename)
+            fastboot("flash", partition, filepath)
 
         # reload bootloader after flashing
         if filename in ("bootloader.img"):
