@@ -5,14 +5,13 @@
 convert servicefile xml to list of shell commands and run them
 """
 
-from sh import fastboot
-
 import argparse
 import logging
 import os
 import stat
 import time
 import xml.etree.ElementTree as ET
+import sh
 
 LOG = logging.getLogger()
 LOG.setLevel("INFO")
@@ -37,6 +36,12 @@ def parse_args():
         help="don't do anything, just print what would be done",
     )
     parser.add_argument(
+        "--max-retries",
+        default=3,
+        type=int,
+        help="retry the shell command NUM times in case of failure",
+    )
+    parser.add_argument(
         "SRC_ROM_DIR",
         nargs="?",
         default=".",
@@ -49,11 +54,33 @@ def ensure_device_connected(dry_run=False):
     if dry_run:
         print("skipping check for device as dry-run mode")
     else:
-        assert fastboot("devices") != "" , "no device found"
+        assert fastboot("devices", dry_run=dry_run, _timeout=5) != "", "no device found"
 
 
 def ensure_servicefile_exists(servicefile):
     assert stat.S_ISREG(os.stat(servicefile).st_mode), "servicefile,xml doesn't exist"
+
+
+def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
+    for i in range(num_retries):
+        try:
+            LOG.info(" ".join(args))
+            if not dry_run:
+                sh.fastboot(*args, _timeout=timeout)
+            return
+        except sh.TimeoutException as e:
+            LOG.warning("fastboot timeout: {}. try {}/{}".format(e, i, num_retries))
+    LOG.fatal(
+        "FASTBOOT FAILURE; max_retries = {} exceeded. Bailing now".format(num_retries)
+    )
+    raise sh.TimeoutException("max retries exceeded", full_cmd=" ".join(args))
+
+
+def reboot_device():
+    LOG.info("rebooting; sleeping 20 sec")
+    fastboot("reboot", "bootloader", timeout=20, dry_run=dry_run)
+    if not dry_run:
+        time.sleep(20)
 
 
 def flash_device(src_rom_dir, dry_run=False):
@@ -67,23 +94,16 @@ def flash_device(src_rom_dir, dry_run=False):
 
     def getvar(step):
         var = step.attrib["var"]
-        cmd = "fastboot getvar {}".format(var)
-        LOG.info(cmd)
-        if not dry_run:
-            fastboot("getvar", var)
+        fastboot("getvar", var, timeout=5, dry_run=dry_run)
 
     def oem(step):
         var = step.attrib["var"]
-        cmd = "fastboot oem {}".format(var)
-        LOG.info(cmd)
-        if not dry_run:
-            fastboot("oem", var)
+        fastboot("oem", var, timeout=5, dry_run=dry_run)
 
     def flash(step):
         filename = step.attrib["filename"]
         partition = step.attrib["partition"]
         filepath = os.path.join(src_rom_dir, filename)
-        cmd = "fastboot flash {} {}".format(partition, filepath)
 
         # system partition is large; reboot to make sure we're starting with a
         # clean slate
@@ -94,9 +114,7 @@ def flash_device(src_rom_dir, dry_run=False):
                 fastboot("reboot", "bootloader")
                 time.sleep(20)
 
-        LOG.info(cmd)
-        if not dry_run:
-            fastboot("flash", partition, filepath)
+        fastboot("flash", partition, filepath, dry_run=dry_run, timeout=60)
 
         # reload bootloader after flashing
         if filename in ("bootloader.img"):
@@ -108,10 +126,7 @@ def flash_device(src_rom_dir, dry_run=False):
 
     def erase(step):
         partition = step.attrib["partition"]
-        cmd = "fastboot erase {}".format(partition)
-        LOG.info(cmd)
-        if not dry_run:
-            fastboot("erase", partition)
+        fastboot("erase", partition, dry_run=dry_run, timeout=20)
 
     operation_dispatch = {
         "getvar": getvar,
