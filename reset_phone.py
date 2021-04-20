@@ -26,7 +26,8 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "-d", "--debug",
+        "-d",
+        "--debug",
         action="store_true",
         help="enable debug logging information",
     )
@@ -76,14 +77,18 @@ def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
     raise sh.TimeoutException("max retries exceeded", full_cmd=" ".join(args))
 
 
-def reboot_device():
+def reboot_device(dry_run=False):
     LOG.info("rebooting; sleeping 20 sec")
     fastboot("reboot", "bootloader", timeout=20, dry_run=dry_run)
     if not dry_run:
         time.sleep(20)
 
 
-def flash_device(src_rom_dir, dry_run=False):
+def flash_device(
+    src_rom_dir, preprocessing=None, postprocessing=None, retries=3, dry_run=False
+):
+    preprocessing = preprocessing or {}
+    postprocessing = postprocessing or {}
     ensure_device_connected(dry_run)
     servicefile = "{}/servicefile.xml".format(src_rom_dir)
     ensure_servicefile_exists(servicefile)
@@ -105,24 +110,13 @@ def flash_device(src_rom_dir, dry_run=False):
         partition = step.attrib["partition"]
         filepath = os.path.join(src_rom_dir, filename)
 
-        # system partition is large; reboot to make sure we're starting with a
-        # clean slate
-        if filename in ("system.img", "system.img_sparsechunk.0"):
-            LOG.info("rebooting; sleeping 20 sec")
-            LOG.info("fastboot reboot bootloader")
-            if not dry_run:
-                fastboot("reboot", "bootloader")
-                time.sleep(20)
+        if filename in preprocessing:
+            preprocessing[filename](dry_run)
 
         fastboot("flash", partition, filepath, dry_run=dry_run, timeout=60)
 
-        # reload bootloader after flashing
-        if filename in ("bootloader.img"):
-            LOG.info("rebooting; sleeping 20 sec")
-            LOG.info("fastboot reboot bootloader")
-            if not dry_run:
-                fastboot("reboot", "bootloader")
-                time.sleep(20)
+        if filename in postprocessing:
+            postprocessing[filename](dry_run)
 
     def erase(step):
         partition = step.attrib["partition"]
@@ -142,7 +136,25 @@ def flash_device(src_rom_dir, dry_run=False):
 
 def main():
     args = parse_args()
-    flash_device(args.SRC_ROM_DIR, dry_run=args.dry_run)
+
+    # system partition is large; reboot to make sure we're starting with a
+    # clean slate
+    preprocessing = {
+        "system.img": reboot_device,
+        "system.img_sparsechunk.0": reboot_device,
+    }
+
+    postprocessing = {
+        # reload bootloader after flashing
+        "bootloader.img": reboot_device
+    }
+
+    flash_device(
+        args.SRC_ROM_DIR,
+        preprocessing=preprocessing,
+        postprocessing=postprocessing,
+        dry_run=args.dry_run,
+    )
 
 
 if __name__ == "__main__":
