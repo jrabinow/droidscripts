@@ -55,11 +55,11 @@ def ensure_device_connected(dry_run=False):
     if dry_run:
         print("skipping check for device as dry-run mode")
     else:
-        assert fastboot("devices", dry_run=dry_run, _timeout=5) != "", "no device found"
+        assert fastboot("devices", dry_run=dry_run, timeout=5) != "", "no device found"
 
 
 def ensure_servicefile_exists(servicefile):
-    assert stat.S_ISREG(os.stat(servicefile).st_mode), "servicefile,xml doesn't exist"
+    assert stat.S_ISREG(os.stat(servicefile).st_mode), "servicefile.xml doesn't exist"
 
 
 def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
@@ -67,8 +67,8 @@ def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
         try:
             LOG.info(" ".join(args))
             if not dry_run:
-                sh.fastboot(*args, _timeout=timeout)
-            return
+                ret = sh.fastboot(*args, _timeout=timeout)
+            return ret
         except sh.TimeoutException as e:
             LOG.warning("fastboot timeout: {}. try {}/{}".format(e, i, num_retries))
     LOG.fatal(
