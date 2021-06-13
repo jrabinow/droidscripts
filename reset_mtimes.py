@@ -54,7 +54,7 @@ def main():
     matching_file_prefix_re = re.compile(matching_file_prefix)
     extract_date_re = assemble_extraction_regex(matching_file_prefix)
 
-    for filepath, filename in walkdir("/storage/emulated/0/DCIM/Camera", match_regex=matching_file_prefix_re, invert=False):
+    for filepath, filename in walkdir("/storage/C358-0D11/DCIM/Camera", match_regex=matching_file_prefix_re, invert=False):
         LOG.debug(filepath)
         match = extract_date_re.match(filename)
         if match:

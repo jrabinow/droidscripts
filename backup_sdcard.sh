@@ -8,16 +8,17 @@ set -o pipefail
 function usage ()
 {
     cat << EOF
-Usage: $(basename "$0") [OPTION]...
+Usage: ${0##*/} [OPTION]...
 Options: --help, -h: show this help dialog
          --dry-run: do not do anything - just show what would be done
+         --user, -u : backup
 EOF
 }
 
 function main ()
 {
     local dry_run=""
-    while getopts "h-:" opt; do
+    while getopts "u:h-:" opt; do
         case ${opt} in
             h)  # help message
                 usage
@@ -32,11 +33,19 @@ function main ()
                     dry-run)
                         dry_run="--dry-run"
                         ;;
+                    user)
+                        user="${!OPTIND}"
+                        OPTIND=$((OPTIND + 1))
+                        ;;
                     *)
                         printf 'Unknown option, exiting now\n' >&2
                         exit 1
                         ;;
                 esac
+                ;;
+            u)
+                echo "${OPTARG}"
+                exit 0
                 ;;
             ?)
                 printf 'Unknown option, exiting now\n' >&2
