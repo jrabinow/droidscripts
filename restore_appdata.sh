@@ -9,7 +9,7 @@ set -o pipefail
 function usage ()
 {
     cat << EOF
-Usage: $(basename $0) [OPTION]... [PACKAGE]
+Usage: ${0##*/} [OPTION]... [PACKAGE]
 Options: -h, --help: show this help dialog
          -u USER, --user USER: 0 (personal) or 10 (work profile)
          --all: restore appdata for all available apps
@@ -18,19 +18,26 @@ EOF
 
 function restore_appdata ()
 {
-    app="${1}"; shift
+    local app="${1}"; shift
+    local app_name
+    local datadir
+    local app_dir
+    local archive_file
+    local appuser
+    local appgroup
 
     cd "/data/user/${user}/"
-    local app_name="$(basename "${app}")"
-    local datadir="/data/user/${user}"
-    local app_dir="${datadir}/${app_name}"
-    local archive_file="${app}/${app_name}.zip"
+
+    app_name="${app##*/}"
+    datadir="/data/user/${user}"
+    app_dir="${datadir}/${app_name}"
+    archive_file="${app}/${app_name}.zip"
 
     if [ -d "${app_dir}" ] && [ -r "${archive_file}" ]; then
         echo "RESTORING APPDATA FOR ${app_dir} from ${archive_file}"
-        local appuser="$(stat -c "%U" "${app_dir}")"
-        local appgroup="$(stat -c "%G" "${app_dir}")"
-        rm -r "${app_dir}"/*
+        appuser="$(stat -c "%U" "${app_dir}")"
+        appgroup="$(stat -c "%G" "${app_dir}")"
+        rm -r "${app_dir:?}"/*
         unzip -qd "${app_dir}" -o "${archive_file}"
         mv "${app_dir}/${app_name}"/* "${app_dir}/"
         rmdir "${app_dir}/${app_name}"
@@ -47,7 +54,7 @@ function restore_all_appdata ()
 {
     backupdir="${1}"; shift
 
-    for app in ${backupdir}/*; do
+    for app in "${backupdir}"/*; do
         if [ "${app##*/}" != "oandbackup.log" ]; then
             restore_appdata "${app}"
         fi
@@ -66,7 +73,8 @@ function main ()
                 exit 0
                 ;;
             u)
-                user="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+                user="${!OPTIND}"
+                OPTIND=$(( OPTIND + 1 ))
                 ;;
             -)
                 case "${OPTARG}" in
@@ -75,7 +83,8 @@ function main ()
                         exit 0
                         ;;
                     user)
-                        user="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+                        user="${!OPTIND}"
+                        OPTIND=$(( OPTIND + 1 ))
                         ;;
                     all)
                         enable_all=true
@@ -98,11 +107,12 @@ function main ()
     if [ "$#" -ge 1 ]; then
         while [ $# -ge 1 ]; do
             app="${1}"; shift
-            restore_appdata "/storage/emulated/${user}/oandbackups/${app}"
+            restore_appdata "/storage/C358-0D11/app_backups/oandbackups/${user}/${app}"
         done
     elif "${enable_all}"; then
-        restore_all_appdata "/storage/emulated/${user}/oandbackups"
+        restore_all_appdata "/storage/C358-0D11/app_backups/oandbackups/${user}"
     else
+        # shellcheck disable=SC2016
         printf 'must pass in `--all` flag or specify individual package names\n' >&2
     fi
 }
