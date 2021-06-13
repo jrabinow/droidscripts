@@ -1,3 +1,6 @@
 [submodule "adb-sync"]
 	path = thirdparty/adb-sync
 	url = https://github.com/google/adb-sync.git
+[submodule "thirdparty/universal-android-debloater"]
+	path = thirdparty/universal-android-debloater
+	url = https://git.akatastroph.com/community/universal-android-debloater.git
