@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -e -u
+set -o pipefail
+
+# write some cool doc here
+
+function usage()
+{
+    cat << EOF
+Usage: ${0##*/} [OPTION]...
+Options: --help, -h: show this help dialog
+         --reboot, -r: reboot phone before
+EOF
+}
+
+function main()
+{
+    local device=foles
+    local reboot=false
+
+    while getopts "hr-:" opt; do
+        case ${opt} in
+            h) # help message
+                usage
+                exit 0
+                ;;
+            r)
+                reboot=true
+                ;;
+            -)
+                case "${OPTARG}" in
+                    help)
+                        usage
+                        exit 0
+                        ;;
+                    reboot)
+                        reboot=true
+                        ;;
+                    *)
+                        printf 'Unknown option, exiting now\n' >&2
+                        exit 1
+                        ;;
+                esac
+                ;;
+            ?)
+                echo "Unknown option, exiting now" >&2
+                exit 1
+                ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+    [[ ${1:-} == '--' ]] && shift
+
+    if "${reboot}"; then
+        adb wait-for-device
+        adb reboot-bootloader
+    fi
+
+    fastboot boot ~/Documents/android-personal/$device/magisk_patched.img
+}
+
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    main "$@"
+fi
