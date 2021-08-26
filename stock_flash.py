@@ -6,11 +6,12 @@ convert servicefile xml to list of shell commands and run them
 """
 
 import argparse
+import hashlib
 import logging
 import os
 import stat
-import time
 import xml.etree.ElementTree as ET
+
 import sh
 
 LOG = logging.getLogger()
@@ -80,10 +81,17 @@ def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
 
 
 def reboot_device(dry_run=False):
-    LOG.info("rebooting; sleeping 20 sec")
+    LOG.info("rebooting; waiting for device")
     fastboot("reboot", "bootloader", timeout=20, dry_run=dry_run)
     if not dry_run:
-        time.sleep(20)
+        fastboot("wait-for-device")
+
+
+def verify_file_md5(filepath, ref_md5sum):
+    with open(filepath, "rb") as f:
+        file_contents = f.read()
+    calc_md5sum = hashlib.md5(file_contents).hexdigest()
+    return ref_md5sum == calc_md5sum
 
 
 def flash_device(
@@ -110,7 +118,11 @@ def flash_device(
     def flash(step):
         filename = step.attrib["filename"]
         partition = step.attrib["partition"]
+        md5sum = step.attrib["MD5"]
         filepath = os.path.join(src_rom_dir, filename)
+        assert verify_file_md5(filepath, md5sum), "bad md5sum for file {}".format(
+            filepath
+        )
 
         if filename in preprocessing:
             preprocessing[filename](dry_run)
