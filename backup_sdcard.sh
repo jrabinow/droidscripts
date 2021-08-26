@@ -11,7 +11,7 @@ function usage ()
 Usage: ${0##*/} [OPTION]...
 Options: --help, -h: show this help dialog
          --dry-run: do not do anything - just show what would be done
-         --user, -u : backup
+         --user, -u: backup this user
 EOF
 }
 
@@ -55,6 +55,10 @@ function main ()
                 usage
                 exit 0
                 ;;
+            u)
+                user="${!OPTIND}"
+                OPTIND=$((OPTIND + 1))
+                ;;
             -)
                 case "${OPTARG}" in
                     basedir)
@@ -77,10 +81,6 @@ function main ()
                         exit 1
                         ;;
                 esac
-                ;;
-            u)
-                echo "${OPTARG}"
-                exit 0
                 ;;
             ?)
                 printf 'Unknown option, exiting now\n' >&2
