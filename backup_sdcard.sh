@@ -39,10 +39,7 @@ function backup_sdcard_for_user ()
     user="${1}"; shift
     cd "${user}"
     # shellcheck disable=SC2086
-    adb-sync --reverse -t "/storage/emulated/${user}/" . --delete ${dry_run}
-    if [[ -z "${dry_run}" ]]; then
-        rm -r ./Android/
-    fi
+    adb-sync --reverse -t "/storage/emulated/${user}/" . --delete ${dry_run} --exclude Android,osmand
 }
 
 function main ()
