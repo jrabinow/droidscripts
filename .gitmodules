@@ -3,7 +3,7 @@
 	url = https://github.com/jrabinow/adb-sync.git
 [submodule "thirdparty/universal-android-debloater"]
 	path = thirdparty/universal-android-debloater
-	url = https://git.akatastroph.com/community/universal-android-debloater.git
+	url = https://gitlab.com/W1nst0n/universal-android-debloater.git
 [submodule "thirdparty/AMDH"]
 	path = thirdparty/AMDH
 	url = https://github.com/SecTheTech/AMDH.git
