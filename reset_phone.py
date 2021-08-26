@@ -68,6 +68,8 @@ def fastboot(*args, num_retries=3, timeout=None, dry_run=False):
             LOG.info(" ".join(args))
             if not dry_run:
                 ret = sh.fastboot(*args, _timeout=timeout)
+            else:
+                ret = 0
             return ret
         except sh.TimeoutException as e:
             LOG.warning("fastboot timeout: {}. try {}/{}".format(e, i, num_retries))
