@@ -10,6 +10,7 @@ import hashlib
 import logging
 import os
 import stat
+import time
 import xml.etree.ElementTree as ET
 
 import sh
@@ -84,7 +85,7 @@ def reboot_device(dry_run=False):
     LOG.info("rebooting; waiting for device")
     fastboot("reboot", "bootloader", timeout=20, dry_run=dry_run)
     if not dry_run:
-        fastboot("wait-for-device")
+        time.sleep(5)
 
 
 def verify_file_md5(filepath, ref_md5sum):

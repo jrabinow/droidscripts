@@ -55,7 +55,7 @@ function main ()
     script="$(basename "${scriptfile}")"
 
     adb push "${scriptfile}" /sdcard/
-    adb shell "su -c 'mv \"/sdcard/${script}\" /cache/; sed -i \"s%^#!/usr/bin/env %#!/system/bin/env %\" \"/cache/${script}\"; chmod +x \"/cache/${script}\"; PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:/sbin:\$PATH \"/cache/${script}\" $@; rm \"/cache/${script}\"'"
+    adb shell "su -c 'mv \"/sdcard/${script}\" /cache/; sed -i \"s%^#!/usr/bin/env %#!/system/bin/env %\" \"/cache/${script}\"; chmod +x \"/cache/${script}\"; PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:/sbin:\$PATH \"/cache/${script}\" $@; rm -f \"/cache/${script}\" \"/sdcard/${scriptfile}\"'"
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
