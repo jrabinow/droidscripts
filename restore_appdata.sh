@@ -18,6 +18,7 @@ EOF
 
 function restore_appdata ()
 {
+    local user="${1}"; shift
     local app="${1}"; shift
     local app_name
     local datadir
@@ -31,19 +32,19 @@ function restore_appdata ()
     app_name="${app##*/}"
     datadir="/data/user/${user}"
     app_dir="${datadir}/${app_name}"
-    archive_file="${app}/${app_name}.zip"
+    archive_file="${app}/data.tar.gz"
 
     if [ -d "${app_dir}" ] && [ -r "${archive_file}" ]; then
         echo "RESTORING APPDATA FOR ${app_dir} from ${archive_file}"
-        appuser="$(stat -c "%U" "${app_dir}")"
-        appgroup="$(stat -c "%G" "${app_dir}")"
-        rm -r "${app_dir:?}"/*
-        unzip -qd "${app_dir}" -o "${archive_file}"
-        mv "${app_dir}/${app_name}"/* "${app_dir}/"
-        rmdir "${app_dir}/${app_name}"
-        rm -rf "${app_dir}/cache" "${app_dir}/code_cache"
-        chown -R "${appuser}:${appgroup}" "${app_dir}"
-        restorecon -R -v "${app_dir}"
+        pkg_uid="$(pm list packages -U --user "${user}"|grep "${app_name}"|cut -d: -f3)"
+        appuser="$(stat -c "%U" "${app_dir}" || "${pkg_uid}")"
+        appgroup="$(stat -c "%G" "${app_dir}" || "${pkg_uid}")"
+        rm -r "${app_dir:?}"/* || true
+        tar -C "${app_dir}" -zxf "${archive_file}" || true
+        cd "${app_dir}"
+        rm -rf "./cache" "./code_cache"
+        chown -R "${appuser}:${appgroup}" "./"
+        restorecon -R "${app_dir}"
     else
         [ -d "${app_dir}" ] || echo "appdir ${app_dir} fail"
         [ -r "${archive_file}" ] || echo "archive ${archive_file} fail"
@@ -52,11 +53,12 @@ function restore_appdata ()
 
 function restore_all_appdata ()
 {
+    user="${1}"; shift
     backupdir="${1}"; shift
 
     for app in "${backupdir}"/*; do
         if [ "${app##*/}" != "oandbackup.log" ]; then
-            restore_appdata "${app}"
+            restore_appdata "${user}" "${app}"
         fi
     done
 }
@@ -107,10 +109,12 @@ function main ()
     if [ "$#" -ge 1 ]; then
         while [ $# -ge 1 ]; do
             app="${1}"; shift
-            restore_appdata "/storage/C358-0D11/app_backups/oandbackups/${user}/${app}"
+            #restore_appdata "${user}" "/storage/C358-0D11/app_backups/oandbackups/${user}/${app}"
+            restore_appdata "${user}" "/storage/emulated/${user}/oandbackups/${app}"
         done
     elif "${enable_all}"; then
-        restore_all_appdata "/storage/C358-0D11/app_backups/oandbackups/${user}"
+        #restore_all_appdata "${user}" "/storage/C358-0D11/app_backups/oandbackups/${user}"
+        restore_all_appdata "${user}" "/storage/emulated/${user}/oandbackups/"
     else
         # shellcheck disable=SC2016
         printf 'must pass in `--all` flag or specify individual package names\n' >&2

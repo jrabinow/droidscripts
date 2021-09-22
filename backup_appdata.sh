@@ -7,8 +7,7 @@ set -o pipefail
 # `rundroid backup_appdata.sh --user 10 com.Slack` will backup just slack appdata for user 10
 
 readonly APPS=(
-    #org.mozilla.firefox
-    com.shazam.android
+    0/com.whatsapp
 )
 
 function usage ()
@@ -23,7 +22,8 @@ EOF
 
 function backup_appdata ()
 {
-    local app="${1}"; shift
+    local user="${1}"; shift
+    local app_name="${1}"; shift
     local backupdir="${1}"; shift
     local datadir
     local app_dir
@@ -32,13 +32,13 @@ function backup_appdata ()
     cd "/data/user/${user}/"
 
     datadir="/data/user/${user}"
-    app_dir="${datadir}/${app}"
-    archive_file="${backupdir}/${app}.txz"
+    app_dir="${datadir}/${app_name}"
+    archive_file="${backupdir}/${app_name}/data.tar.gz"
+    mkdir -p "$(dirname "${archive_file}")"
 
     if [ -d "${app_dir}" ]; then
-        echo "BACKING UP APPDATA FOR ${app}"
-        tar --exclude cache -Jcf "${archive_file}" "${app_dir}"
-        rm -rf "${app_dir}/cache" "${app_dir}/code_cache"
+        echo "BACKING UP APPDATA FOR ${app_name}"
+        tar --exclude cache -C "${app_dir}" -Jcf "${archive_file}" .
     else
         echo "appdir ${app_dir} fail"
     fi
@@ -49,7 +49,9 @@ function backup_all_appdata ()
     backupdir="${1}"; shift
 
     for app in "${APPS[@]}"; do
-        backup_appdata "${app}" "${backupdir}"
+        user="${app/%%*}"
+        app_name="${app##*/}"
+        backup_appdata "${user}" "${app_name}" "/storage/emulated/${user}/${backupdir}"
     done
 }
 
@@ -99,10 +101,10 @@ function main ()
     if [ "$#" -ge 1 ]; then
         while [ $# -ge 1 ]; do
             app="${1}"; shift
-            backup_appdata "${app}" "/storage/emulated/${user}/oandbackups"
+            backup_appdata "${user}" "${app}" "/storage/emulated/${user}/oandbackups"
         done
     elif "${enable_all}"; then
-        backup_all_appdata "/storage/emulated/${user}/oandbackups"
+        backup_all_appdata "/oandbackups"
     else
         # shellcheck disable=SC2016
         printf 'must pass in `--all` flag or specify individual package names\n' >&2
