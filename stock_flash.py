@@ -135,7 +135,14 @@ def flash_device(
 
     def erase(step):
         partition = step.attrib["partition"]
-        fastboot("erase", partition, dry_run=dry_run, timeout=20)
+        if partition == "userdata":
+            ret = input("WARNING - REQUESTED ERASING USERDATA. THIS WILL ERASE ALL DATA ON PHONE. Are you sure about this? Enter \"YES\" TO CONTINUE: ")
+            if ret == "YES":
+                fastboot("erase", partition, dry_run=dry_run, timeout=20)
+            else:
+                print("SKIPPING ERASING USERDATA")
+        else:
+            fastboot("erase", partition, dry_run=dry_run, timeout=20)
 
     operation_dispatch = {
         "getvar": getvar,
