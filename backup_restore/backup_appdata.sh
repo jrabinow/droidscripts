@@ -3,7 +3,7 @@
 set -e -u
 set -o pipefail
 
-# `rundroid backup_appdata.sh --all` will auto-backup all apps owned by user 0 to $BACKUPDIR located on sdcard
+# `rundroid backup_appdata.sh --all` will auto-backup all apps to $BACKUPDIR located on sdcard
 # `rundroid backup_appdata.sh --array` will auto-backup all apps in "${APPS}" defined below
 # `rundroid backup_appdata.sh --user 10 com.Slack` will backup just slack appdata for user 10
 
@@ -73,6 +73,11 @@ function backup_all_appdata ()
     done
 }
 
+function android_users ()
+{
+    adb shell pm list users|awk 'match($0, /^\s*UserInfo\{([0-9]+):.*:[0-9]+}/, arr) {print arr[1]}'
+}
+
 function main ()
 {
     local user=0
@@ -131,7 +136,9 @@ function main ()
             backup_appdata "${user}" "${app}" 
         done
     elif "${enable_all}"; then
-        backup_all_appdata "${user}" "${BACKUPDIR}"
+        for u in $(android_users); do
+            backup_all_appdata "${u}" "${BACKUPDIR}"
+        done
     elif "${enable_array}"; then
         backup_array_appdata "${user}" "${BACKUPDIR}"
     else
