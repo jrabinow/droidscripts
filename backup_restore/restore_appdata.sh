@@ -3,13 +3,18 @@
 set -e -u
 set -o pipefail
 
-# `rundroid restore_appdata.sh --all` will auto-restore all backups in /storage/emulated/0/oandbackup
+# `rundroid restore_appdata.sh --all` will auto-restore all backups in /storage/emulated/$user/$BACKUPDIR
 # `rundroid restore_appdata.sh --user 10 com.Slack` will restore just slack appdata for user 10
+
+BACKUPDIR="Documents/oandbackups/"
+
 
 function usage ()
 {
     cat << EOF
 Usage: ${0##*/} [OPTION]... [PACKAGE]
+BACKUPDIR=$BACKUPDIR
+
 Options: -h, --help: show this help dialog
          -u USER, --user USER: 0 (personal) or 10 (work profile)
          --all: restore appdata for all available apps
@@ -109,12 +114,10 @@ function main ()
     if [ "$#" -ge 1 ]; then
         while [ $# -ge 1 ]; do
             app="${1}"; shift
-            #restore_appdata "${user}" "/storage/C358-0D11/app_backups/oandbackups/${user}/${app}"
-            restore_appdata "${user}" "/storage/emulated/${user}/oandbackups/${app}"
+            restore_appdata "${user}" "/storage/emulated/${user}/${BACKUPDIR}/${app}"
         done
     elif "${enable_all}"; then
-        #restore_all_appdata "${user}" "/storage/C358-0D11/app_backups/oandbackups/${user}"
-        restore_all_appdata "${user}" "/storage/emulated/${user}/oandbackups/"
+        restore_all_appdata "${user}" "/storage/emulated/${user}/${BACKUPDIR}"
     else
         # shellcheck disable=SC2016
         printf 'must pass in `--all` flag or specify individual package names\n' >&2

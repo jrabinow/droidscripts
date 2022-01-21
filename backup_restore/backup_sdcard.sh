@@ -23,9 +23,9 @@ function android_users ()
 function remount_readable ()
 {
     dry_run="${1}"; shift
+    # source: https://android.stackexchange.com/questions/221122/how-to-access-storage-emulated-10-multi-users-env-in-adb-shell-on-android-9
     cmd="umount /mnt/runtime/*/emulated; /system/bin/sdcard -u 1023 -g 1023 -m -w -G /data/media emulated"
     remount_script=$(mktemp)
-    # source: https://android.stackexchange.com/questions/221122/how-to-access-storage-emulated-10-multi-users-env-in-adb-shell-on-android-9
     cat > "${remount_script}" << EOF
 ${cmd}
 EOF

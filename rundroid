@@ -8,7 +8,7 @@ set -o pipefail
 function usage ()
 {
     cat << EOF
-Usage: $(basename $0) [OPTION]...
+Usage: ${0##*/} [OPTION]...
 Options: --help, -h: show this help dialog
 EOF
 }
@@ -42,7 +42,7 @@ function main ()
     shift $((OPTIND - 1))
     [[ "${1:-}" == '--' ]] && shift
 
-    if [ $(adb devices|wc -l) == 2 ]; then
+    if [ "$(adb devices|wc -l)" == 2 ]; then
         printf "Error: no devices available\n" >&2
         exit 1
     fi

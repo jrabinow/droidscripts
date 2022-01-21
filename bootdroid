@@ -57,7 +57,7 @@ function main()
         adb reboot-bootloader
     fi
 
-    fastboot boot ~/Documents/android-personal/$device/magisk_patched.img
+    fastboot boot $android/$device/magisk_patched.img
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
