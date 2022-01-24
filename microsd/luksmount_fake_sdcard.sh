@@ -4,6 +4,11 @@
 PARTITION=/dev/block/mmcblk0p2
 LABEL=microsd_luks
 
+# This script would replace the internal storage mounted at /sdcard/ with the
+# micro-sd card inserted into the phone... except there are permission problems
+# I'm not sure how to workaround :-(
+# If you have any ideas, drop me a line
+
 set -e -u
 set -o pipefail
 
@@ -73,4 +78,8 @@ EOF
     am broadcast -a android.intent.action.MEDIA_MOUNTED -d "file:///storage/emulated/0"
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    echo "This script doesn't work, bailing now"
+    exit 1
+    main "$@"
+fi
