@@ -11,6 +11,7 @@ function usage()
     cat << EOF
 Usage: ${0##*/}" [OPTION]...
 Options: --help, -h: show this help dialog
+         -u USER: only run for this user
 EOF
 }
 
@@ -27,23 +28,25 @@ function sync_janitor ()
     rmdir_p=(
         Documents/Media
         Documents
+        WhatsApp
     )
 
-    for i in "${whitelisted_deletions[@]}"; do
-        rm -r "${basedir}/$i" 2>/dev/null || true
-    done
+    if [ -d "${basedir}" ]; then
+        for i in "${whitelisted_deletions[@]}"; do
+            rm -r "${basedir}/$i" 2>/dev/null || true
+        done
 
-    cd "${basedir}"
-    for i in "${rmdir_p[@]}"; do
-        rmdir -p "${i}" 2>/dev/null || true
-    done
-
-    rmdir "${basedir}"
+        cd "${basedir}"
+        for i in "${rmdir_p[@]}"; do
+            rmdir -p "${i}" 2>/dev/null || true
+        done
+        rmdir "${basedir}"
+    fi
 }
 
 function main()
 {
-    user=0
+    user=all
 
     while getopts "hu:-:" opt; do
         case ${opt} in
@@ -75,7 +78,12 @@ function main()
     shift $((OPTIND - 1))
     [[ ${1:-} == '--' ]] && shift
 
-    sync_janitor "${user}"
+    if [ "${user}" == all ]; then
+        sync_janitor 0
+        sync_janitor 10
+    else
+        sync_janitor "${user}"
+    fi
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
