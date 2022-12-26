@@ -20,14 +20,23 @@ function sync_janitor ()
     user="${1}"; shift
     basedir="${android}/storage/emulated/${user}/TRASH"
     whitelisted_deletions=(
+        WhatsApp/.Thumbs
         WhatsApp/Backups
         WhatsApp/Databases
+        WhatsApp/.Shared
+        WhatsApp/Media/.Statuses
         Documents/Media/Signal
         Documents/oandbackups
+        Movies/.thumbnails
+        Notifications
+        Pictures/.thumbnails
+        .DS_Store
     )
     rmdir_p=(
         Documents/Media
         Documents
+        Movies
+        Pictures
         WhatsApp
     )
 
