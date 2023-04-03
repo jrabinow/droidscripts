@@ -6,7 +6,7 @@
 	url = https://gitlab.com/W1nst0n/universal-android-debloater.git
 [submodule "thirdparty/AMDH"]
 	path = thirdparty/AMDH
-	url = https://github.com/SecTheTech/AMDH.git
+	url = https://github.com/A-YATTA/AMDH
 [submodule "thirdparty/uad-gui"]
 	path = thirdparty/uad-gui
 	url = https://github.com/0x192/universal-android-debloater.git
