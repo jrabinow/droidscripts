@@ -10,3 +10,6 @@
 [submodule "thirdparty/uad-gui"]
 	path = thirdparty/uad-gui
 	url = https://github.com/0x192/universal-android-debloater.git
+[submodule "thirdparty/sony-dump-tool"]
+	path = thirdparty/sony-dump-tool
+	url = https://github.com/munjeni/anyxperia_dumper
